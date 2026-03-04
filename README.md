@@ -1,7 +1,7 @@
 # Sales-Inventory-Manegement
 # Project Overview
 Sales & inventory data for a fictitious toy store chain in Mexico called Maven Toys, including information about products, stores, daily sales transactions, and current inventory levels at each location.
-# sql Queries
+# Sql Queries
 #### 1.location with the highest concentration of stores.
 
 ```sql
@@ -16,17 +16,17 @@ order by stores
 | 12     | Commercial     |
 | 29     | Downtown       |
 
-* **Downtime**
+> Store distribution: Downtown 29 (58%) | Commercial 12 (24%) | Residential 6 (12%) | Airport 3 (6%)
 
 #### 2.Are stores in the "Downtown" area more profitable than those in the "Airport" or "Residential" or 'Commercial' areas
 ```sql
-  SELECT st.Store_Location, 
-    SUM(sa.Units * (p.Product_Price - p.Product_Cost)) AS Total_Profit
-FROM Stores st
-JOIN Sales sa ON st.Store_ID = sa.Store_ID
-JOIN Products p ON sa.Product_ID = p.Product_ID
-GROUP BY st.Store_Location
-ORDER BY Total_Profit DESC;
+  select st.store_location, 
+    sum(sa.units * (p.product_price - p.product_cost)) as total_profit
+from stores st
+join sales sa on st.store_id = sa.store_id
+join products p on sa.product_id = p.product_id
+group by st.store_location
+order by total_profit desc;
 ```
 | Store_Location | Total_Profit |
 | :--- | :--- |
@@ -36,7 +36,6 @@ ORDER BY Total_Profit DESC;
 | **Airport** | 84428.00 |
 
 * **Revenue Concentration:** The Downtown sector acts as the primary financial engine, contributing approximately 56% of total profits across the entire store network.
-* **Location Efficiency:** While Airport locations contribute the lowest total profit (84,428), they represent the highest profit-to-store ratio, indicating a more optimized and high-margin sales model per site.
 
 #### 3.Product Category with their total units sold and total profit
 ```sql
@@ -47,21 +46,20 @@ SELECT
 FROM Sales sa
 JOIN Products p ON sa.Product_ID = p.Product_ID
 JOIN Stores st ON sa.Store_ID = st.Store_ID
-WHERE st.Store_City = 'Guadalajara' -- You can swap this for 'Monterrey', 'Campeche', etc.
 GROUP BY p.Product_Category
 ORDER BY Total_Profit DESC;
 ```
 
 | Product_Category | Total_Units_Sold | Total_Profit |
 | :--- | :--- | :--- |
-| **Electronics** | 4104 | 31923.00 |
-| **Toys** | 6555 | 25,878.00 |
-| **Games** | 3165 | 10377.00 |
-| **Sports & Outdoors** | 2503 | 7638.00 |
-| **Art & Crafts** | 3160 | 7137.00 |
+| **Electronics** | 41588 |	322252.00 |
+| **Toys** |   63593 |	252094.00 |
+| **Games** |   41864 |	136725.00 |
+| **Sports & Outdoors** |  32626 |	99140.00 |
+| **Art & Crafts** |  30221	| 74111.00  |                                           
 
-* **High-Margin Leadership:** Electronics is the premier profit driver (31,923), yielding the highest return despite moving lower volumes compared to the Toys category.
-* **Volume vs. Value:** While Toys dominate in total units sold (6,555), the lower profit-per-unit suggests a strategy focused on high turnover and foot traffic rather than high individual margins.
+ -  Electronics dominates profit margin at $7.74/unit generating $322,252 (35.1% of total profit) with only 41,588 units
+ -  Art & Crafts has lowest margin ($2.45/unit) despite 30,221 units sold generating only $74,111 
 
 #### 4.
 ```sql
