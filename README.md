@@ -2,7 +2,7 @@
 # Project Overview
 Sales & inventory data for a fictitious toy store chain in Mexico called Maven Toys, including information about products, stores, daily sales transactions, and current inventory levels at each location.
 # Sql Queries
-#### 1.location with the highest concentration of stores.
+#### 1. location with the highest concentration of stores.
 
 ```sql
 select count(store_id) as stores ,store_location  from stores
@@ -16,9 +16,9 @@ order by stores
 | 12     | Commercial     |
 | 29     | Downtown       |
 
-> Store distribution: Downtown 29 (58%) | Commercial 12 (24%) | Residential 6 (12%) | Airport 3 (6%)
+-  **Store distribution** Downtown 29 (58%) | Commercial 12 (24%) | Residential 6 (12%) | Airport 3 (6%)
 
-#### 2.Are stores in the "Downtown" area more profitable than those in the "Airport" or "Residential" or 'Commercial' areas
+#### 2. Are stores in the "Downtown" area more profitable than those in the "Airport" or "Residential" or 'Commercial' areas
 ```sql
   select st.store_location, 
     sum(sa.units * (p.product_price - p.product_cost)) as total_profit
@@ -37,17 +37,17 @@ order by total_profit desc;
 
 * **Revenue Concentration:** The Downtown sector acts as the primary financial engine, contributing approximately 56% of total profits across the entire store network.
 
-#### 3.Product Category with their total units sold and total profit
+#### 3. Product Category with their total units sold and total profit
 ```sql
-SELECT 
-    p.Product_Category,
-    SUM(sa.Units) AS Total_Units_Sold,
-    SUM(sa.Units * (p.Product_Price - p.Product_Cost)) AS Total_Profit
-FROM Sales sa
-JOIN Products p ON sa.Product_ID = p.Product_ID
-JOIN Stores st ON sa.Store_ID = st.Store_ID
-GROUP BY p.Product_Category
-ORDER BY Total_Profit DESC;
+select 
+    p.product_category,
+    sum(sa.units) as total_units_sold,
+    sum(sa.units * (p.product_price - p.product_cost)) as total_profit
+from sales sa
+join products p on sa.product_id = p.product_id
+join stores st on sa.store_id = st.store_id
+group by p.product_category
+order by total_profit desc;
 ```
 
 | Product_Category | Total_Units_Sold | Total_Profit |
@@ -61,57 +61,19 @@ ORDER BY Total_Profit DESC;
  -  Electronics dominates profit margin at $7.74/unit generating $322,252 (35.1% of total profit) with only 41,588 units
  -  Art & Crafts has lowest margin ($2.45/unit) despite 30,221 units sold generating only $74,111 
 
-#### 4.
+
+#### 4.  Which product categories are driving the most profit,and how efficient is our pricing strategy for each
 ```sql
-SELECT 
-    st.Store_City,
-    SUM(CASE WHEN MONTH(sa.Date) = MONTH(CURDATE()) THEN sa.Units ELSE 0 END) AS Current_Month_Sales,
-     SUM(CASE WHEN MONTH(sa.Date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) THEN sa.Units ELSE 0 END) AS Last_Month_Sales,
-   (SUM(CASE WHEN MONTH(sa.Date) = MONTH(CURDATE()) THEN sa.Units ELSE 0 END) - 
-SUM(CASE WHEN MONTH(sa.Date) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) THEN sa.Units ELSE 0 END)) AS Unit_Difference
-FROM Sales sa
-JOIN Stores st ON sa.Store_ID = st.Store_ID
-GROUP BY st.Store_City
-ORDER BY Unit_Difference DESC;
-```
-| Store_City | Current_Month_Sales | Last_Month_Sales | Unit_Difference |
-| :--- | :--- | :--- | :--- |
-| **Tuxtla Gutierrez** | 923 | 655 | **+268** |
-| **Mexicali** | 2,027 | 1,768 | **+259** |
-| **Puebla** | 2,409 | 2,160 | **+249** |
-| **Campeche** | 1,593 | 1,414 | **+179** |
-| **San Luis Potosi** | 903 | 745 | **+158** |
-| **Durango** | 578 | 429 | **+149** |
-| **Cuidad de Mexico** | 4,478 | 4,339 | **+139** |
-| **Chihuahua** | 1,611 | 1,480 | **+131** |
-| **Saltillo** | 1,490 | 1,440 | **+50** |
-| **Toluca** | 1,508 | 1,500 | **+8** |
-| **Chilpancingo** | 555 | 574 | -19 |
-| **Hermosillo** | 2,213 | 2,251 | -38 |
-| **Zacatecas** | 352 | 400 | -48 |
-| **Oaxaca** | 450 | 501 | -51 |
-| **Villahermosa** | 762 | 819 | -57 |
-| **Xalapa** | 1,305 | 1,370 | -65 |
-| **Monterrey** | 2,974 | 3,059 | -85 |
-
-
-* **Momentum Leaders:** Tuxtla Gutierrez and Mexicali are showing the strongest growth velocity, indicating a successful local sales surge or effective stock  in those regions.
-* **Regional Contraction:** Larger markets like Monterrey and Xalapa are seeing a slight month-over-month decline, suggesting a cooling of demand or potential inventory gaps in major urban centers.
-
-
-#### 5."Which product categories are driving the most profit,and how efficient is our pricing strategy for each?"
-```sql
-SELECT  p.Product_Category,
-        ROUND(SUM(IFNULL(p.Product_Price - p.Product_Cost, 0) * s.Units), 2) AS Total_Profit,
-    
-     ROUND(
-        AVG(IFNULL(p.Product_Price - p.Product_Cost, 0) / NULLIF(p.Product_Price, 0)) * 100, 
-        2
-    ) AS Avg_Margin_Percentage
-FROM Products p
-JOIN Sales s ON p.Product_ID = s.Product_ID
-GROUP BY p.Product_Category
-ORDER BY Total_Profit DESC;
+select  p.product_category,
+        round(sum(ifnull(p.product_price - p.product_cost, 0) * s.units), 2) as total_profit,
+        round(
+            sum(ifnull(p.product_price - p.product_cost, 0) * s.units) / 
+            nullif(sum(p.product_price * s.units), 0) * 100,  2
+            ) as avg_margin_percentage
+from products p
+join sales s on p.product_id = s.product_id
+group by p.product_category
+order by total_profit desc;
 ```
 
 | Product_Category | Total_Profit  | Avg_Margin_Percentage  |
@@ -122,19 +84,20 @@ ORDER BY Total_Profit DESC;
 | **Sports & Outdoors** | 99,140.00 | 21.35 |
 | **Art & Crafts** | 74,111.00 | 28.69 |
 
-* **Premium Performance:** Electronics is the most efficient category, commanding a near **50% margin**, making it the primary driver of bottom-line growth despite lower sales volume.
-* **Volume vs. Efficiency:** Toys generate significant total profit through sheer volume, yet operate on a **thin 23.7% margin**, indicating a pricing strategy built on competitive, high-turnover sales.
+* **Premium Performance:** Electronics makes 50 cents profit  of sales, so even though we sell fewer electronics items, they make the most money for the business.
+
 
 #### 5. Top 5 Stores with Total Inventory values
 ```sql
-SELECT 
-    s.Store_Name,
-    SUM(i.Stock_On_Hand * p.Product_Cost) AS Total_Inventory_Value
-FROM Inventory i
-JOIN Products p ON i.Product_ID = p.Product_ID
-JOIN Stores s ON i.Store_ID = s.Store_ID
-GROUP BY s.Store_Name
-ORDER BY Total_Inventory_Value DESC limit 5 ;
+select 
+    s.store_name,
+    sum(i.stock_on_hand * p.product_cost) as total_inventory_value
+from inventory i
+join products p on i.product_id = p.product_id
+join stores s on i.store_id = s.store_id
+group by s.store_name
+order by total_inventory_value desc 
+limit 5;
 ```
 
 | Store_Name | Total_Inventory_Value  |
@@ -145,47 +108,47 @@ ORDER BY Total_Inventory_Value DESC limit 5 ;
 | **Maven Toys Saltillo 2** | 7,578.93 |
 | **Maven Toys Chihuahua 2** | 7,565.26 |
 
-> 💡 **Inventory Insights:** Ciudad de Mexico 2 holds the highest inventory value at 8,917.85, while the remaining
-> top 5 stores are closely grouped between 7,500–7,900, indicating consistent stock distribution across locations.
+* **Inventory Insights:** Ciudad de Mexico 2 holds the highest inventory value at 8,917.85, while the remaining
+ top 5 stores are closely grouped between 7,500–7,900, indicating consistent stock distribution across locations.
 
 
 #### 6.which categories are taking up the most physical space in your stores with their total inventory values
 ```sql
-SELECT 
-    p.Product_Category,
-    SUM(i.Stock_On_Hand) AS Total_Items,
-    ROUND(SUM(i.Stock_On_Hand * p.Product_Cost), 2) AS Total_Inventory_Value
-FROM Products p
-JOIN Inventory i ON p.Product_ID = i.Product_ID
-GROUP BY p.Product_Category
-ORDER BY Total_Inventory_Value DESC;
+select 
+    p.product_category,
+    sum(i.stock_on_hand) as total_items,
+    round(sum(i.stock_on_hand * p.product_cost), 2) as total_inventory_value
+from products p
+join inventory i on p.product_id = i.product_id
+group by p.product_category
+order by total_inventory_value desc;
 ```
 
 | Product_Category   | Total_Items | Total_Inventory_Value|
 |--------------------|-------------|--------------------------|
-| Toys               | 75,539      | 9,861.47                 |
-| Art & Crafts       | 86,356      | 5,075.65                 |
-| Sports & Outdoors  | 49,815      | 3,077.19                 |
-| Games              | 61,555      | 1,489.45                 |
-| Electronics        | 24,183      | 0,705.82                 |
+| Toys               |   7553      |     	99861.47            |
+|    Art & Crafts    |   	8635     |      65075.65            |
+| Sports & Outdoors  |  	4981     |    	53077.19            |
+|    Games	         |       6155  |	51489.45                |
+|    Electronics     |     	2418   |	30705.82                |
 
 
-> 💡 **Category Insights:** Toys dominate inventory value at $9,861 despite Art & Crafts holding the most physical stock (86,356 items),
-> suggesting Art & Crafts are low-cost but space-heavy, while Electronics hold the least items yet carry notable value per unit.
+* **Category Insights:** Toys dominate inventory value at $99,861 despite Art & Crafts holding the most physical stock (86,35 items),
+suggesting Art & Crafts are low-cost but space-heavy, while Electronics hold the least items yet carry notable value per unit.
 
 #### 7. Which cities in Mexico are generating the highest total profit
 ```sql
-SELECT 
-    st.Store_City,
-    ROUND(SUM((p.Product_Price - p.Product_Cost) * sa.Units), 2) AS City_Profit
-FROM Stores st
-JOIN Sales sa ON st.Store_ID = sa.Store_ID
-JOIN Products p ON sa.Product_ID = p.Product_ID
-GROUP BY st.Store_City
-ORDER BY City_Profit DESC
-LIMIT 5;
+select 
+    st.store_city,
+    round(sum((p.product_price - p.product_cost) * sa.units), 2) as city_profit
+from stores st
+join sales sa on st.store_id = sa.store_id
+join products p on sa.product_id = p.product_id
+group by st.store_city
+order by city_profit desc
+limit 5;
 ```
-| Store_City      | City_Profit ($) |
+| Store_City      | City_Profit |
 |-----------------|-----------------|
 | Ciudad de Mexico| 101,951.00      |
 | Guadalajara     | 82,953.00       |
@@ -193,64 +156,64 @@ LIMIT 5;
 | Hermosillo      | 57,724.00       |
 | Guanajuato      | 48,920.00       |
 
-> 💡 **City Profit Insights:** Ciudad de Mexico leads all cities with $101,951 in profit — nearly 23% more than Guadalajara ($82,953),
-> while the top 3 major metro cities (CDMX, Guadalajara, Monterrey) together contribute over 70% of the total top-5 profit.
+* **City Profit Insights:** Ciudad de Mexico leads all cities with $101,951 in profit — nearly 23% more than Guadalajara ($82,953),
+ while the top 3 major metro cities (CDMX, Guadalajara, Monterrey) together contribute over 70% of the total top-5 profit.
 
 
 #### 8. Which categories are holding too much stock compared to how fast they actually sell
 ```sql
-WITH CategorySales AS (
-      SELECT 
-        Product_ID,
-        SUM(Units) / COUNT(DISTINCT Date) AS Daily_Velocity
-    FROM Sales
-    GROUP BY Product_ID
+with category_sales as (
+      select 
+        product_id,
+        sum(units) / count(distinct date) as daily_velocity
+    from sales
+    group by product_id
 )
-SELECT 
-    p.Product_Category,
-    SUM(i.Stock_On_Hand)                                                        AS Total_Units_In_Stock,
-    ROUND(SUM(i.Stock_On_Hand * p.Product_Cost), 2)                             AS Inventory_Value,
-    ROUND(SUM(i.Stock_On_Hand) / SUM(IFNULL(cs.Daily_Velocity, 0.1)), 0)        AS Days_Of_Stock_On_Hand
-FROM Products p
-JOIN Inventory i ON p.Product_ID = i.Product_ID
-LEFT JOIN CategorySales cs ON p.Product_ID = cs.Product_ID
-GROUP BY p.Product_Category
-ORDER BY Inventory_Value DESC;
+select 
+    p.product_category,
+    sum(i.stock_on_hand) as total_units_in_stock,
+    round(sum(i.stock_on_hand * p.product_cost), 2) as inventory_value,
+    round(sum(i.stock_on_hand) / sum(ifnull(cs.daily_velocity, 0.1)), 0) as days_of_stock_on_hand
+from products p
+join inventory i on p.product_id = i.product_id
+left join category_sales cs on p.product_id = cs.product_id
+group by p.product_category
+order by inventory_value desc;
 ```
 
 | Product_Category  | Total_Units_In_Stock | Inventory_Value     | Days_Of_Stock_On_Hand |
 |-------------------|----------------------|---------------------|-----------------------|
-| Toys              | 75,539               | 9,861.47            | 0                     |
-| Art & Crafts      | 86,356               | 5,075.65            | 1                     |
-| Sports & Outdoors | 49,815               | 3,077.19            | 0                     |
-| Games             | 61,555               | 1,489.45            | 0                     |
-| Electronics       | 24,183               | 0,705.82            | 0                     |
+|Toys               |          	7553       |      	99861.47     |        	0            |
+| Art & Crafts      |         	8635	     |         65075.65	   |          1            |
+| Sports & Outdoors |         	4981       |       	53077.19     |        	0            |
+|   Games           |         	6155       |        	51489.45   |           	0          |
+|  Electronics	    |           2418       |          	30705.82 |           0           |
 
-> 💡 **Overstock Insights:**  Art & Crafts holds the most stock (86,356 units) but sells slowly, making it the most overstocked category.
->  Toys lead in inventory value ($9,861) with fast turnover, while Electronics hold the least stock but maintain decent value.
+ * **Overstock Insights:**  Art & Crafts holds the most stock (8635 units) but sells slowly, making it the most overstocked category.
+  Toys lead in inventory value ($99861) with fast turnover
 
 
 #### 9.  Top Selling Product Per Month
 ```sql
-WITH MonthlyProductSales AS (
-    SELECT 
-        MONTHNAME(s.Date) AS Sales_Month,
-        p.Product_Name,
-        SUM(s.Units) AS Product_Units,
-        SUM(s.Units * p.Product_Price) AS Product_Revenue,
-        RANK() OVER (PARTITION BY MONTHNAME(s.Date) ORDER BY SUM(s.Units) DESC) AS Sales_Rank
-    FROM Sales s
-    JOIN Products p ON s.Product_ID = p.Product_ID
-    GROUP BY Sales_Month, p.Product_Name
+with monthly_product_sales as (
+    select 
+        monthname(s.date) as sales_month,
+        p.product_name,
+        sum(s.units) as product_units,
+        sum(s.units * p.product_price) as product_revenue,
+        rank() over (partition by monthname(s.date) order by sum(s.units) desc) as sales_rank
+    from sales s
+    join products p on s.product_id = p.product_id
+    group by sales_month, p.product_name
 )
-SELECT 
-    Sales_Month,
-    Product_Name    AS Top_Selling_Product,
-    Product_Units   AS Units_Sold,
-    Product_Revenue AS Monthly_Revenue
-FROM MonthlyProductSales
-WHERE Sales_Rank = 1
-ORDER BY Sales_Month DESC;
+select 
+    sales_month,
+    product_name as top_selling_product,
+    product_units as units_sold,
+    product_revenue as monthly_revenue
+from monthly_product_sales
+where sales_rank = 1
+order by sales_month desc;
 ```
 | Sales_Month | Top_Selling_Product | Units_Sold | Monthly_Revenue      |
 |-------------|---------------------|------------|----------------------|
@@ -261,8 +224,8 @@ ORDER BY Sales_Month DESC;
 | May         | Colorbuds           | 6974      | 104540.26           |
 | June        | Colorbuds           | 2834      | 242.17              |
 
-> 💡 **Monthly Sales Insights:** Colorbuds dominates as the top-selling product every single month.
-> Sales peak in January ($121K) and steadily decline through June, suggesting possible seasonality or stock issues mid-year.
+ * **Monthly Sales Insights:** Colorbuds dominates as the top-selling product every single month.
+ Sales peak in January ($121K) and steadily decline through June, suggesting possible seasonality or stock issues mid-year.
 
 
 
